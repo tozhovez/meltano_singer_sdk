@@ -87,7 +87,7 @@ def mypy(session: Session) -> None:
 def tests(session: Session) -> None:
     """Execute pytest tests and compute coverage."""
     _clean_py312_deps(session, test_dependencies)
-    session.install(".[s3,parquet]")
+    session.install(".[parquet,s3,sql]")
     session.install(*test_dependencies)
 
     sqlalchemy_version = os.environ.get("SQLALCHEMY_VERSION")

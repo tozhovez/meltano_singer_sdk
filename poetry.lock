@@ -2614,9 +2614,10 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 docs = ["furo", "myst-parser", "sphinx", "sphinx-autobuild", "sphinx-copybutton", "sphinx-inline-tabs", "sphinx-notfound-page", "sphinx-reredirects"]
 parquet = ["numpy", "numpy", "pyarrow"]
 s3 = ["fs-s3fs"]
+sql = ["sqlalchemy"]
 testing = ["pytest", "pytest-durations"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8"
-content-hash = "1b837f356d2b6ed6e90e55059808bbbf85b398b8bce9275b432e27688156044e"
+content-hash = "b50b8a3ae4f6b75f625bcb5d42925da24063256993f9242138eedc9610c8a656"
