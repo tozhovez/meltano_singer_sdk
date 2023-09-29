@@ -7,6 +7,8 @@ import copy
 import datetime
 import json
 import typing as t
+from collections.abc import Mapping  # noqa: TCH003
+from functools import singledispatchmethod
 from os import PathLike
 from pathlib import Path
 from types import MappingProxyType
@@ -139,25 +141,13 @@ class Stream(metaclass=abc.ABCMeta):
         self._schema_filepath: Path | Traversable | None = None
         self._metadata: singer.MetadataMapping | None = None
         self._mask: singer.SelectionMask | None = None
-        self._schema: dict
+        self._schema: Mapping
         self._is_state_flushed: bool = True
         self._last_emitted_state: dict | None = None
         self._sync_costs: dict[str, int] = {}
         self.child_streams: list[Stream] = []
         if schema:
-            if isinstance(schema, (PathLike, str)):
-                if not Path(schema).is_file():
-                    msg = f"Could not find schema file '{self.schema_filepath}'."
-                    raise FileNotFoundError(msg)
-
-                self._schema_filepath = Path(schema)
-            elif isinstance(schema, dict):
-                self._schema = schema
-            elif isinstance(schema, singer.Schema):
-                self._schema = schema.to_dict()
-            else:
-                msg = f"Unexpected type {type(schema).__name__} for arg 'schema'."
-                raise ValueError(msg)
+            self.register_schema(schema)
 
         if self.schema_filepath:
             self._schema = json.loads(self.schema_filepath.read_text())
@@ -168,6 +158,31 @@ class Stream(metaclass=abc.ABCMeta):
                 "object or filepath was not provided."
             )
             raise ValueError(msg)
+
+    @singledispatchmethod
+    def register_schema(self, schema: PathLike[str] | str) -> None:
+        """Register a schema.
+
+        Args:
+            schema: TODO
+        """
+        if not isinstance(schema, (PathLike, str)):
+            msg = f"Unexpected type {type(schema).__name__} for arg 'schema'."
+            raise ValueError(msg)
+
+        if not Path(schema).is_file():
+            msg = f"Could not find schema file '{self.schema_filepath}'."
+            raise FileNotFoundError(msg)
+
+        self._schema_filepath = Path(schema)
+
+    @register_schema.register
+    def _(self, schema: Mapping) -> None:
+        self._schema = schema
+
+    @register_schema.register
+    def _(self, schema: singer.Schema) -> None:
+        self._schema = schema.to_dict()
 
     @property
     def stream_maps(self) -> list[StreamMap]:

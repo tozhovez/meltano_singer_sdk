@@ -7,7 +7,7 @@ import datetime
 import logging
 import typing as t
 from enum import Enum
-from functools import lru_cache
+from functools import lru_cache, singledispatch
 
 import pendulum
 
@@ -469,26 +469,41 @@ def _conform_record_data_types(  # noqa: PLR0912
     return output_object, unmapped_properties
 
 
-def _conform_primitive_property(  # noqa: PLR0911
+def _conform_primitive_property(
     elem: t.Any,  # noqa: ANN401
     property_schema: dict,
 ) -> t.Any:  # noqa: ANN401
     """Converts a primitive (i.e. not object or array) to a json compatible type."""
-    if isinstance(elem, (datetime.datetime, pendulum.DateTime)):
-        return to_json_compatible(elem)
-    if isinstance(elem, datetime.date):
-        return f"{elem.isoformat()}T00:00:00+00:00"
-    if isinstance(elem, datetime.timedelta):
-        epoch = datetime.datetime.fromtimestamp(0, UTC)
-        timedelta_from_epoch = epoch + elem
-        if timedelta_from_epoch.tzinfo is None:
-            timedelta_from_epoch = timedelta_from_epoch.replace(tzinfo=UTC)
-        return timedelta_from_epoch.isoformat()
-    if isinstance(elem, datetime.time):
-        return str(elem)
-    if isinstance(elem, bytes):
-        # for BIT value, treat 0 as False and anything else as True
-        return elem != b"\x00" if is_boolean_type(property_schema) else elem.hex()
     if is_boolean_type(property_schema):
         return None if elem is None else elem != 0
     return elem
+
+
+@_conform_primitive_property.register
+def _(elem: datetime.datetime | pendulum.DateTime, _property_schema: dict) -> str:
+    return to_json_compatible(elem)
+
+
+@_conform_primitive_property.register
+def _(elem: datetime.date, _property_schema: dict) -> str:
+    return f"{elem.isoformat()}T00:00:00+00:00"
+
+
+@_conform_primitive_property.register
+def _(elem: datetime.timedelta, _property_schema: dict) -> str:
+    epoch = datetime.datetime.fromtimestamp(0, UTC)
+    timedelta_from_epoch = epoch + elem
+    if timedelta_from_epoch.tzinfo is None:
+        timedelta_from_epoch = timedelta_from_epoch.replace(tzinfo=UTC)
+    return timedelta_from_epoch.isoformat()
+
+
+@_conform_primitive_property.register
+def _(elem: datetime.time, _property_schema: dict) -> str:
+    return str(elem)
+
+
+@_conform_primitive_property.register
+def _(elem: bytes, property_schema: dict) -> bool | str:
+    # for BIT value, treat 0 as False and anything else as True
+    return elem != b"\x00" if is_boolean_type(property_schema) else elem.hex()

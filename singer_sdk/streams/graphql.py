@@ -66,6 +66,7 @@ class GraphQLStream(RESTStream, t.Generic[_TToken], metaclass=abc.ABCMeta):
         """
         params = self.get_url_params(context, next_page_token)
         query = self.query
+        self.logger.info("Querying %s with query %s", self.name, query)
 
         if query is None:
             msg = "Graphql `query` property not set."

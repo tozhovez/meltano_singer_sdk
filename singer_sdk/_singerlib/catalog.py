@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import enum
 import logging
+import sys
 import typing as t
 from dataclasses import dataclass, fields
 
@@ -31,7 +32,7 @@ class SelectionMask(t.Dict[Breadcrumb, bool]):
         Returns:
             True if the breadcrumb is selected, False otherwise.
         """
-        return self[breadcrumb[:-2]] if len(breadcrumb) >= 2 else True  # noqa: PLR2004
+        return self[breadcrumb[:-2]] if len(breadcrumb) >= 2 else True
 
 
 @dataclass
@@ -153,6 +154,65 @@ class MetadataMapping(t.Dict[Breadcrumb, AnyMetadata]):
         """
         return self[()]  # type: ignore[return-value]
 
+    @staticmethod
+    def _get_object_fields_metadata(
+        properties: dict[str, dict[str, t.Any]],
+        breadcrumb: Breadcrumb,
+    ) -> t.Generator[tuple[Breadcrumb, Metadata], None, None]:
+        """Get metadata for nested fields in a schema.
+
+        Args:
+            schema: Schema.
+            breadcrumb: Breadcrumb to check.
+            metadata: Metadata object.
+
+        Returns:
+            Metadata mapping.
+        """
+        for field_name, field_schema in properties.items():
+            field_breadcrumb = (*breadcrumb, "properties", field_name)
+            print(field_breadcrumb, file=sys.stderr)
+            yield (
+                field_breadcrumb,
+                Metadata(inclusion=Metadata.InclusionType.AVAILABLE),
+            )
+            if "object" in field_schema.get("type"):
+                yield from MetadataMapping._get_object_fields_metadata(
+                    field_schema.get("properties", {}),
+                    field_breadcrumb,
+                )
+            if "array" in field_schema.get("type"):
+                yield from MetadataMapping._get_array_fields_metadata(
+                    field_schema,
+                    field_breadcrumb,
+                )
+
+    @staticmethod
+    def _get_array_fields_metadata(
+        field_schema: dict[str, t.Any],
+        breadcrumb: Breadcrumb,
+    ) -> t.Generator[tuple[Breadcrumb, Metadata], None, None]:
+        """Get metadata for nested fields in a schema.
+
+        Args:
+            schema: Schema.
+            breadcrumb: Breadcrumb to check.
+            metadata: Metadata object.
+
+        Returns:
+            Metadata mapping.
+        """
+        if "object" in field_schema.get("type"):
+            yield from MetadataMapping._get_object_fields_metadata(
+                field_schema.get("properties", {}),
+                breadcrumb,
+            )
+        if "array" in field_schema.get("type"):
+            yield from MetadataMapping._get_array_fields_metadata(
+                field_schema.get("items", {}),
+                breadcrumb,
+            )
+
     @classmethod
     def get_standard_metadata(
         cls: type[MetadataMapping],
@@ -191,7 +251,10 @@ class MetadataMapping(t.Dict[Breadcrumb, AnyMetadata]):
             if schema_name:
                 root.schema_name = schema_name
 
-            for field_name in schema.get("properties", {}):
+            properties = schema.get("properties", {})
+
+            for field_name, field_schema in properties.items():
+                breadcrumb = ("properties", field_name)
                 if (
                     key_properties
                     and field_name in key_properties
@@ -201,7 +264,24 @@ class MetadataMapping(t.Dict[Breadcrumb, AnyMetadata]):
                 else:
                     entry = Metadata(inclusion=Metadata.InclusionType.AVAILABLE)
 
-                mapping[("properties", field_name)] = entry
+                mapping[breadcrumb] = entry
+
+                print(breadcrumb, field_schema, file=sys.stderr)
+                if "object" in field_schema.get("type", []):
+                    mapping.update(
+                        cls._get_object_fields_metadata(
+                            field_schema.get("properties", {}),
+                            breadcrumb,
+                        ),
+                    )
+
+                if "array" in field_schema.get("type", []):
+                    mapping.update(
+                        cls._get_array_fields_metadata(
+                            field_schema.get("items", {}),
+                            breadcrumb,
+                        ),
+                    )
 
         mapping[()] = root
 

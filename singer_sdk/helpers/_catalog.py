@@ -12,9 +12,13 @@ from singer_sdk.helpers._typing import is_object_type
 if t.TYPE_CHECKING:
     from logging import Logger
 
+    from typing_extensions import TypeAlias
+
     from singer_sdk._singerlib import Catalog, SelectionMask
 
+
 _MAX_LRU_CACHE = 500
+FieldTree: TypeAlias = t.Dict[str, "FieldTree"]
 
 
 @cached(max_size=_MAX_LRU_CACHE)
@@ -142,3 +146,39 @@ def set_catalog_stream_selected(
 
     md_entry = catalog_entry.metadata[breadcrumb]
     md_entry.selected = selected
+
+
+def selection_to_tree(selection: SelectionMask) -> FieldTree:
+    """Convert a SelectionMask to a tree consisting of selected fields.
+
+    Args:
+        selection: Selection mask dictionary.
+
+    Returns:
+        A dictionary tree with the selected fields.
+
+    >>> selection = {
+    ...     ("properties", "code",): True,
+    ...     ("properties", "name",): True,
+    ...     ("properties", "emoji",): True,
+    ...     ("properties", "languages",): False,
+    ...     ("properties", "languages", "properties", "code"): True,
+    ...     ("properties", "languages", "properties", "name"): False,
+    ...     ("properties", "continent",): True,
+    ...     ("properties", "continent", "properties", "code"): True,
+    ...     ("properties", "continent", "properties", "name"): False,
+    ... }
+    >>> selection_to_tree(selection)
+    {'code': {}, 'name': {}, 'emoji': {}, 'languages': {'code': {}}, 'continent': {'code': {}}}
+    """  # noqa: E501
+    fields = {}
+    for crumb, selected in selection.items():
+        if not crumb:
+            continue
+        if selected:
+            top = crumb[1]
+            if top not in fields:
+                fields[top] = {}
+            fields[top] = selection_to_tree({crumb[2:]: selected})
+
+    return fields
