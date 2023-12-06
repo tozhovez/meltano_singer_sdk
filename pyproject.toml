@@ -44,6 +44,7 @@ backports-datetime-fromisoformat = { version = ">=2.0.1", python = "<3.11" }
 click = "~=8.0"
 cryptography = ">=3.4.6"
 fs = ">=2.4.16"
+fsspec = ">=2023.1.0"
 importlib-metadata = {version = "<9.0.0", python = "<3.12"}
 importlib-resources = {version = ">=5.12.0,!=6.2.0,!=6.3.0,!=6.3.1", python = "<3.9"}
 inflection = ">=0.5.1"
@@ -77,6 +78,7 @@ sphinx-notfound-page = {version = ">=1.0.0", optional = true}
 sphinx-reredirects = {version = ">=0.1.1", optional = true}
 
 # File storage dependencies installed as optional 'filesystem' extras
+s3fs = {version = ">=2023.1.0", optional = true}
 fs-s3fs = {version = ">=1.1.1", optional = true}
 
 # Parquet file dependencies installed as optional 'parquet' extras
@@ -108,7 +110,7 @@ docs = [
     "sphinx-notfound-page",
     "sphinx-reredirects",
 ]
-s3 = ["fs-s3fs"]
+s3 = ["fs-s3fs", "s3fs"]
 testing = [
     "pytest",
     "pytest-durations"
@@ -146,26 +148,26 @@ pytest-codspeed = ">=2.2.0"
 
 [tool.pytest.ini_options]
 addopts = '--ignore=singer_sdk/helpers/_simpleeval.py -m "not external"'
-filterwarnings = [
-    "error",
-    "ignore:Could not configure external gitlab tests:UserWarning",
-    "ignore:No records were available to test:UserWarning",
-    # https://github.com/meltano/sdk/issues/1354
-    "ignore:The function singer_sdk.testing.get_standard_tap_tests is deprecated:DeprecationWarning",
-    # https://docs.python.org/3.12/whatsnew/3.12.html#deprecated
-    # https://github.com/danthedeckie/simpleeval/blob/master/simpleeval.py
-    "ignore:ast.NameConstant is deprecated:DeprecationWarning:simpleeval",
-    # https://docs.python.org/3.12/whatsnew/3.12.html#deprecated
-    # https://github.com/danthedeckie/simpleeval/blob/master/simpleeval.py
-    "ignore:ast.Num is deprecated:DeprecationWarning:simpleeval",
-    # https://github.com/joblib/joblib/pull/1518
-    "ignore:ast.Num is deprecated:DeprecationWarning:joblib._utils",
-    # https://docs.python.org/3.12/whatsnew/3.12.html#deprecated
-    # https://github.com/danthedeckie/simpleeval/blob/master/simpleeval.py
-    "ignore:ast.Str is deprecated:DeprecationWarning:simpleeval",
-    # https://github.com/joblib/joblib/pull/1518
-    "ignore:Attribute n is deprecated:DeprecationWarning:joblib._utils",
-]
+# filterwarnings = [
+#     "error",
+#     "ignore:Could not configure external gitlab tests:UserWarning",
+#     "ignore:No records were available to test:UserWarning",
+#     # https://github.com/meltano/sdk/issues/1354
+#     "ignore:The function singer_sdk.testing.get_standard_tap_tests is deprecated:DeprecationWarning",
+#     # https://docs.python.org/3.12/whatsnew/3.12.html#deprecated
+#     # https://github.com/danthedeckie/simpleeval/blob/master/simpleeval.py
+#     "ignore:ast.NameConstant is deprecated:DeprecationWarning:simpleeval",
+#     # https://docs.python.org/3.12/whatsnew/3.12.html#deprecated
+#     # https://github.com/danthedeckie/simpleeval/blob/master/simpleeval.py
+#     "ignore:ast.Num is deprecated:DeprecationWarning:simpleeval",
+#     # https://github.com/joblib/joblib/pull/1518
+#     "ignore:ast.Num is deprecated:DeprecationWarning:joblib._utils",
+#     # https://docs.python.org/3.12/whatsnew/3.12.html#deprecated
+#     # https://github.com/danthedeckie/simpleeval/blob/master/simpleeval.py
+#     "ignore:ast.Str is deprecated:DeprecationWarning:simpleeval",
+#     # https://github.com/joblib/joblib/pull/1518
+#     "ignore:Attribute n is deprecated:DeprecationWarning:joblib._utils",
+# ]
 markers = [
     "external: Tests relying on external resources",
     "windows: Tests that only run on Windows",

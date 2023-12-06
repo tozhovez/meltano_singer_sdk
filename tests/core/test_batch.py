@@ -71,20 +71,21 @@ def test_encoding_as_dict(encoding: BaseBatchFileEncoding, expected: dict) -> No
 def test_storage_get_url(file_scheme, root, prefix, expected):
     storage = StorageTarget(file_scheme + root)
 
-    with storage.fs(create=True) as fs:
-        url = fs.geturl(prefix)
-        assert url.startswith(file_scheme)
-        assert url.replace("\\", "/").endswith(expected)
+    url = storage.file_url(prefix)
+    assert url.replace("\\", "/").endswith(expected)
+
+    with storage.fs(create=False) as fs:
+        assert f"{fs.protocol}://" == file_scheme
 
 
 def test_storage_get_s3_url():
     storage = StorageTarget("s3://testing123:testing123@test_bucket")
 
-    with storage.fs(create=True) as fs:
-        url = fs.geturl("prefix--file.jsonl.gz")
-        assert url.startswith(
-            "https://s3.amazonaws.com/test_bucket/prefix--file.jsonl.gz",
-        )
+    url = storage.file_url("prefix--file.jsonl.gz")
+    assert url.endswith("test_bucket/prefix--file.jsonl.gz")
+
+    with storage.fs(create=False) as fs:
+        assert f"{fs.protocol}://" == "s3://"
 
 
 @pytest.mark.parametrize(
