@@ -157,3 +157,17 @@ class InvalidRecord(Exception):
         super().__init__(f"Record Message Validation Error: {error_message}")
         self.error_message = error_message
         self.record = record
+
+
+class SingerDecodingError(Exception):
+    """Raised when a singer message line cannot be decoded."""
+
+    def __init__(self, message: str, line_dict: dict) -> None:
+        """Initialize a SingerDecodingError exception.
+
+        Args:
+            message: A message describing the error.
+            line_dict: The Singer message line.
+        """
+        super().__init__(message)
+        self.line_dict = line_dict
