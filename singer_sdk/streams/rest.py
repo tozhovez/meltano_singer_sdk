@@ -5,6 +5,7 @@ from __future__ import annotations
 import abc
 import copy
 import logging
+import sys
 import typing as t
 from http import HTTPStatus
 from urllib.parse import urlparse
@@ -25,8 +26,12 @@ from singer_sdk.pagination import (
 )
 from singer_sdk.streams.core import Stream
 
+if sys.version_info < (3, 12):
+    from typing_extensions import override
+else:
+    from typing import override  # noqa: ICN003
+
 if t.TYPE_CHECKING:
-    import sys
     from datetime import datetime
 
     from backoff.types import Details
@@ -561,6 +566,7 @@ class RESTStream(Stream, t.Generic[_TToken], metaclass=abc.ABCMeta):  # noqa: PL
 
     # Records iterator
 
+    @override
     def get_records(self, context: Context | None) -> t.Iterable[dict[str, t.Any]]:
         """Return a generator of record-type dictionary objects.
 
