@@ -61,16 +61,25 @@ def mypy(session: Session) -> None:
 @session(python=python_versions)
 def tests(session: Session) -> None:
     """Execute pytest tests and compute coverage."""
-    session.install(".[faker,jwt,parquet,s3]")
+    extras = [
+        "faker",
+        "jwt",
+        "parquet",
+        "s3",
+    ]
+
+    # https://github.com/apache/arrow/issues/34757
+    if session.python == "3.13":
+        extras.remove("parquet")
+
+    session.install(f".[{','.join(extras)}]")
     session.install(*test_dependencies)
 
     sqlalchemy_version = os.environ.get("SQLALCHEMY_VERSION")
     if sqlalchemy_version:
         # Bypass nox-poetry use of --constraint so we can install a version of
         # SQLAlchemy that doesn't match what's in poetry.lock.
-        session.poetry.session.install(  # type: ignore[attr-defined]
-            f"sqlalchemy=={sqlalchemy_version}.*",
-        )
+        session.poetry.session.install(sqlalchemy_version)  # type: ignore[attr-defined]
 
     env = {"COVERAGE_CORE": "sysmon"} if session.python == "3.12" else {}
 

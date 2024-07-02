@@ -43,6 +43,7 @@ backoff = { version = ">=2.0.0", python = "<4" }
 backports-datetime-fromisoformat = { version = ">=2.0.1", python = "<3.11" }
 click = "~=8.0"
 fs = ">=2.4.16"
+greenlet = { git = "https://github.com/python-greenlet/greenlet.git", rev="refs/pull/396/head", python = ">3.12" }
 importlib-metadata = {version = "<9.0.0", python = "<3.12"}
 importlib-resources = {version = ">=5.12.0,!=6.2.0,!=6.3.0,!=6.3.1", python = "<3.9"}
 inflection = ">=0.5.1"
@@ -245,6 +246,7 @@ DEP002 = [
     "pendulum",
     "python-dateutil",
     # Transitive constraints
+    "greenlet",
     "numpy",
     "urllib3",
     # Python version-specific dependencies
