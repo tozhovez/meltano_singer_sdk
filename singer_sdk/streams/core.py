@@ -358,9 +358,6 @@ class Stream(metaclass=abc.ABCMeta):  # noqa: PLR0904
         Args:
             context: Stream partition or context dictionary.
             value: TODO
-
-        Returns:
-            TODO
         """
         if not value:
             return

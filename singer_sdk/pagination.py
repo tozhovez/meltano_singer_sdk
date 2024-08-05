@@ -135,10 +135,6 @@ class BaseAPIPaginator(t.Generic[TPageToken], metaclass=ABCMeta):
 
         Args:
             response: API response object.
-
-        Returns:
-            The next page token or index. Return `None` from this method to indicate
-                the end of pagination.
         """
         ...
 
@@ -160,10 +156,6 @@ class SinglePagePaginator(BaseAPIPaginator[None]):
 
         Args:
             response: API response object.
-
-        Returns:
-            The next page token or index. Return `None` from this method to indicate
-                the end of pagination.
         """
         return
 
